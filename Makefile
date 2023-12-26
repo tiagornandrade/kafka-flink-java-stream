@@ -4,5 +4,8 @@ up:
 down:
 	docker-compose down
 
-run:
-	docker-compose exec jobmanager ./bin/flink run -py /opt/flink_pipeline/job.py
+install-requirements:
+	cd SalesTransactionGenerator && source venv/bin/activate && pip3 install -r requirements.txt
+
+run-generator:
+	cd SalesTransactionGenerator && source venv/bin/activate && python3 main.py

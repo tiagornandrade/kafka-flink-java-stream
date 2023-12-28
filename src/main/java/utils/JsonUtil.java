@@ -12,7 +12,7 @@ public class JsonUtil {
             return objectMapper.writeValueAsString(transaction);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
+            return null;
         }
-        return null;
     }
 }

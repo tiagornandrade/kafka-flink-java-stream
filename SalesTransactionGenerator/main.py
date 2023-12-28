@@ -8,7 +8,6 @@ from datetime import datetime
 
 fake = Faker()
 
-
 def generate_sales_transactions():
     user = fake.simple_profile()
 
@@ -26,17 +25,14 @@ def generate_sales_transactions():
         "paymentMethod": random.choice(['credit_card', 'debit_card', 'online_transfer'])
     }
 
-
 def delivery_report(err, msg):
     if err is not None:
         print(f'Message delivery failed: {err}')
     else:
         print(f"Message delivered to {msg.topic} [{msg.partition()}]")
-
-
 def main():
     topic = 'financial_transactions'
-    producer = SerializingProducer({
+    producer= SerializingProducer({
         'bootstrap.servers': 'localhost:9092'
     })
 
@@ -56,13 +52,13 @@ def main():
                              )
             producer.poll(0)
 
+            #wait for 5 seconds before sending the next transaction
             time.sleep(5)
         except BufferError:
             print("Buffer full! Waiting...")
             time.sleep(1)
         except Exception as e:
             print(e)
-
 
 if __name__ == "__main__":
     main()

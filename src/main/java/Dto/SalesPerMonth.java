@@ -8,5 +8,5 @@ import lombok.Data;
 public class SalesPerMonth {
     private int year;
     private int month;
-    private Double totalSales;
+    private double totalSales;
 }

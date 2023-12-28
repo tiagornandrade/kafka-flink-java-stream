@@ -10,10 +10,10 @@ public class Transaction {
     private String productId;
     private String productName;
     private String productCategory;
-    private Double productPrice;
+    private double productPrice;
     private int productQuantity;
     private String productBrand;
-    private Double totalAmount;
+    private double totalAmount;
     private String currency;
     private String customerId;
     private Timestamp transactionDate;

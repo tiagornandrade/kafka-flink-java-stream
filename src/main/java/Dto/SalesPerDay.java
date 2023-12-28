@@ -9,5 +9,5 @@ import java.sql.Date;
 @AllArgsConstructor
 public class SalesPerDay {
     private Date transactionDate;
-    private Double totalSales;
+    private Double totalSales ;
 }

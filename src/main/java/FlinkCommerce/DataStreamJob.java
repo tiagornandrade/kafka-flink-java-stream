@@ -6,24 +6,16 @@ import Dto.SalesPerDay;
 import Dto.SalesPerMonth;
 import Dto.Transaction;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.api.connector.sink.Sink;
-import org.apache.flink.connector.elasticsearch.sink.Elasticsearch7SinkBuilder;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
+import org.apache.flink.connector.jdbc.JdbcSink;
 import org.apache.flink.connector.jdbc.JdbcStatementBuilder;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
-import org.apache.flink.elasticsearch7.shaded.org.apache.http.HttpHost;
-import org.apache.flink.elasticsearch7.shaded.org.elasticsearch.action.index.IndexRequest;
-import org.apache.flink.elasticsearch7.shaded.org.elasticsearch.client.Requests;
-import org.apache.flink.elasticsearch7.shaded.org.elasticsearch.common.xcontent.XContentType;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.connector.jdbc.JdbcSink;
 
 import java.sql.Date;
-
-import static utils.JsonUtil.convertTransactionToJson;
 
 public class DataStreamJob {
     private static final String jdbcUrl = "jdbc:postgresql://localhost:5432/postgres";
@@ -59,7 +51,6 @@ public class DataStreamJob {
                 .withUsername(username)
                 .withPassword(password)
                 .build();
-
 
         transactionStream.addSink(JdbcSink.sink(
                 "CREATE TABLE IF NOT EXISTS transactions (" +
@@ -162,7 +153,7 @@ public class DataStreamJob {
                         transaction -> {
                             Date transactionDate = new Date(System.currentTimeMillis());
                             String category = transaction.getProductCategory();
-                            Float totalSales = transaction.getTotalAmount();
+                            double totalSales = transaction.getTotalAmount();
                             return new SalesPerCategory(transactionDate, category, totalSales);
                         }
                 ).keyBy(SalesPerCategory::getCategory)
@@ -188,7 +179,7 @@ public class DataStreamJob {
         transactionStream.map(
                         transaction -> {
                             Date transactionDate = new Date(System.currentTimeMillis());
-                            Double totalSales = transaction.getTotalAmount();
+                            double totalSales = transaction.getTotalAmount();
                             return new SalesPerDay(transactionDate, totalSales);
                         }
                 ).keyBy(SalesPerDay::getTransactionDate)
@@ -214,7 +205,7 @@ public class DataStreamJob {
                             Date transactionDate = new Date(System.currentTimeMillis());
                             int year = transactionDate.toLocalDate().getYear();
                             int month = transactionDate.toLocalDate().getMonth().getValue();
-                            Double totalSales = transaction.getTotalAmount();
+                            double totalSales = transaction.getTotalAmount();
                             return new SalesPerMonth(year, month, totalSales);
                         }
                 ).keyBy(SalesPerMonth::getMonth)
@@ -236,22 +227,6 @@ public class DataStreamJob {
                         execOptions,
                         connOptions
                 )).name("Insert into sales per month table");
-
-        transactionStream.sinkTo(
-                new Elasticsearch7SinkBuilder<Transaction>()
-                        .setHosts(new HttpHost("localhost", 9200, "http"))
-                        .setEmitter((transaction, runtimeContext, requestIndexer) -> {
-
-                            String json = convertTransactionToJson(transaction);
-
-                            IndexRequest indexRequest = Requests.indexRequest()
-                                    .index("transactions")
-                                    .id(transaction.getTransactionId())
-                                    .source(json, XContentType.JSON);
-                            requestIndexer.add(indexRequest);
-                        })
-                        .build()
-        ).name("Elasticsearch Sink");
 
         env.execute("Flink Ecommerce Realtime Streaming");
     }
